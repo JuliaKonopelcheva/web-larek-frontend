@@ -126,7 +126,7 @@ orderButton.disabled = total === 0;
 
 ---
 
-## Представления (View)
+## Отображения (View)
 
 ### ProductCardView
 **Отображает карточку товара.**
