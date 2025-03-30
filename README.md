@@ -45,7 +45,7 @@ yarn build
 ## Архитектура проекта Web-Ларёк
 
 ### Используемый паттерн
-Проект построен по архитектуре **MVP (Model–View–Presenter)** с применением событийно-ориентированного подхода. Связь между слоями реализована через **EventEmitter**.
+Проект построен по архитектуре **MVP (Model–View–Presenter)**, которая позволяет чётко разделить работу с данными, отображением и логикой взаимодействия. Все части приложения обмениваются сообщениями через EventEmitter — это делает поведение компонентов предсказуемым и облегчает масштабирование. **EventEmitter**.
 
 ---
 
@@ -80,14 +80,14 @@ ProductModel взаимодействует с `MainPresenter`, предоста
 - `removeFromCart(productId)` — удаляет товар
 - `getCartItems()` — возвращает текущие товары в корзине
 
-BasketModel передаёт данные в `BasketView` и генерирует события для обновления интерфейса.
+BasketModel управляет логикой корзины: хранит товары, добавляет и удаляет их. Она не напрямую влияет на интерфейс, а просто отправляет события — так, например, при изменении содержимого корзины, интерфейс сам обновляется через подписку.
 
 ### OrderModel
 **Содержит данные о заказе.**
 - `address`, `email`, `phone`, `payment`
 - Методы `setAddress()`, `setContacts()`, `setPayment()` — устанавливают соответствующие поля
 
-OrderModel используется `CheckoutPresenter` для формирования запроса на оформление заказа.
+CheckoutPresenter использует OrderModel как хранилище всех данных, которые нужны для оформления заказа: адрес, способ оплаты, контакты и итоговая сумма.
 
 ### AppStateModel
 **Техническая модель для хранения состояния интерфейса.**
@@ -123,7 +123,7 @@ BasketView работает в связке с `BasketModel` и реагируе
 - `close()` — закрывает
 - `emit('modal:open')`, `emit('modal:close')`
 
-ModalView используется другими view-компонентами: например, `ProductCardView` или `OrderFormView` открываются внутри модального окна.
+ModalView работает как универсальный контейнер: я могу вставить туда любую часть интерфейса — от карточки товара до формы оформления. Это избавляет от дублирования кода и позволяет переиспользовать модалки в разных сценариях.
 
 ### OrderFormView
 **Первая форма оформления заказа.**
@@ -176,6 +176,122 @@ OrderFormView показывает поля доставки и оплаты. П
 - Все компоненты используют `EventEmitter` для связи между действиями пользователя и обработкой данных
 
 ---
+
+## Типы и интерфейсы
+
+Для описания структуры данных, приходящих с сервера и используемых внутри приложения, заданы следующие интерфейсы и типы в файле `src/types/index.ts`.
+
+### Интерфейсы данных
+
+#### `Product`
+**Описывает структуру одного товара из каталога.**
+```ts
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  price: number | null;
+}
+```
+
+#### `ProductListResponse`
+**Ответ от API со списком товаров.**
+```ts
+interface ProductListResponse {
+  total: number;
+  items: Product[];
+}
+```
+
+#### `BasketItem`
+**Объект, представляющий товар в корзине.**
+```ts
+interface BasketItem {
+  productId: string;
+  quantity: number;
+}
+```
+
+#### `OrderRequest` и `OrderResponse`
+**Формат отправки и получения данных при оформлении заказа.**
+```ts
+interface OrderRequest {
+  payment: string;
+  email: string;
+  phone: string;
+  address: string;
+  items: string[];
+  total: number;
+}
+
+interface OrderResponse {
+  id: string;
+  total: number;
+}
+```
+
+#### `UserContact`
+**Данные покупателя.**
+```ts
+interface UserContact {
+  email: string;
+  phone: string;
+}
+```
+
+#### `ShippingAddress`
+**Адрес доставки.**
+```ts
+interface ShippingAddress {
+  address: string;
+}
+```
+
+#### `ValidationError`
+**Структура ошибки валидации форм.**
+```ts
+interface ValidationError {
+  field: string;
+  message: string;
+}
+```
+
+---
+
+### Дополнительные типы
+
+#### `PaymentMethod`
+**Допустимые способы оплаты.**
+```ts
+type PaymentMethod = 'online' | 'cash';
+```
+
+#### `ModalType`
+**Типы модальных окон.**
+```ts
+type ModalType = 'product' | 'basket' | 'order' | 'contacts' | 'success' | null;
+```
+
+#### `FormStep`
+**Этапы формы оформления заказа.**
+```ts
+enum FormStep {
+  Order,
+  Contacts,
+  Success
+}
+```
+
+#### `ClickEventTarget`
+**Тип для `event.target` при обработке событий клика.**
+```ts
+type ClickEventTarget = HTMLElement | null;
+```
+
+---
+
 
 Схема архитектуры оформлена в draw.io и представлена в файле `uml.png`. Она иллюстрирует зависимости между моделями, представлениями и презентерами с подписями взаимодействий (например: `renders`, `opens modal`, `sets data`, `emits`).
 
