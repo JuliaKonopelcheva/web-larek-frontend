@@ -2,14 +2,21 @@
 //       ДАННЫЕ С API
 // ========================
 
-// Товар из каталога (приходит с сервера)
+// Методы для работы с сервером (используются в ApiService)
+export interface IApiService {
+	getProducts(): Promise<ProductListResponse>;
+	getProductById(id: string): Promise<Product>;
+	submitOrder(data: OrderRequest): Promise<OrderResponse>;
+}
+
+// Интерфейс карточки товара (приходит с сервера)
 export interface Product {
 	id: string;
 	title: string;
 	description: string;
 	image: string;
 	category: string;
-	price: number | null; // В интерфейсе отображается: либо `${price} синапсов`, либо 'Цена не указана'
+	price: number | null; // В интерфейсе отображается: либо `${price} синапсов`, либо 'Бесценно'
 }
 
 // Ответ от сервера при запросе всех товаров
@@ -24,7 +31,7 @@ export interface BasketItem {
 	quantity: number;
 }
 
-// Данные, которые мы отправляем на сервер при оформлении заказа
+// Интерфейс пользователя
 export interface OrderRequest {
 	payment: PaymentMethod;
 	email: string;
@@ -34,21 +41,21 @@ export interface OrderRequest {
 	total: number; // итоговая сумма (рассчитывается автоматически)
 }
 
-// Ответ от сервера после оформления заказа
+// Ответ от сервера после успешного заказа
 export interface OrderResponse {
 	id: string;
 	total: number;
 }
 
-// Данные контактов пользователя (используем внутри приложения)
+// Адрес доставки (первый шаг формы)
+export interface ShippingAddress {
+	address: string;
+}
+
+// Контактные данные пользователя (второй шаг формы)
 export interface UserContact {
 	email: string;
 	phone: string;
-}
-
-// Адрес доставки (внутренний тип)
-export interface ShippingAddress {
-	address: string;
 }
 
 // ========================
@@ -68,26 +75,8 @@ export enum FormStep {
 	Success = 'success'
 }
 
-// Ошибка валидации (например, если поле не заполнено)
-export interface ValidationError {
-	field: string;
-	message: string;
-}
-
 // Тип для обработки кликов — может быть элемент или null
 export type ClickEventTarget = HTMLElement | null;
-
-
-// ========================
-//    ИНТЕРФЕЙС API-КЛИЕНТА
-// ========================
-
-// Методы для работы с сервером (используются в ApiService)
-export interface IApiService {
-	getProducts(): Promise<ProductListResponse>;
-	getProductById(id: string): Promise<Product>;
-	submitOrder(data: OrderRequest): Promise<OrderResponse>;
-}
 
 
 // ========================
@@ -117,9 +106,9 @@ export interface IOrderModel {
 
 // Интерфейс состояния приложения
 export interface IAppStateModel {
-	setModal(modal: ModalType): void;
-	clearModal(): void;
-	setError(message: string): void;
+  getModal(): ModalType;
+  setModal(modal: ModalType): void;
+  clearModal(): void;
 }
 
 
@@ -141,20 +130,23 @@ export interface IModalView extends IView {
 	bindClose(): void;
 }
 
+// export interface IBasketItemView extends IView {}
+// export interface IBasketView extends IView {}
+// export interface IOrderFormView extends IView {}
+// export interface IContactsFormView extends IView {}
+// export interface ISuccessView extends IView {}
+// export interface IGalleryCardView extends IView {}
+// export interface IModalCardView extends IView {}
+
 
 // ========================
-//   ИНТЕРФЕЙСЫ ПРЕЗЕНТЕРОВ
+//   ИНТЕРФЕЙС ПРЕЗЕНТЕРА
 // ========================
 
-// Главный презентер (управляет главной страницей и корзиной)
 export interface IMainPresenter {
-	init(): void;
-}
-
-// Презентер для оформления заказа
-export interface ICheckoutPresenter {
-	submitOrder(): void;
-	validateForm(): boolean;
+  init(): void;
+  submitOrder(): void;
+  validateForm(): boolean;
 }
 
 
