@@ -28,7 +28,7 @@ export interface ProductListResponse {
 // Один товар в корзине
 export interface BasketItem {
 	productId: string;
-	quantity: number;
+	quantity: number;  // возможно не нужен будет, товар определяется по id и может быть только один
 }
 
 // Интерфейс пользователя

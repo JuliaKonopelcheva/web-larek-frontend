@@ -220,6 +220,16 @@ EventEmitter используется для связи между всеми с
 
 ### Интерфейсы данных
 
+#### `ApiService`
+**Описывает методы получения товаров и оформления заказа**
+```ts
+interface IApiService {
+  getProducts(): Promise<Product[]>;
+  getProductById(id: string): Promise<Product>;
+  submitOrder(data: OrderRequest): Promise<OrderResponse>;
+}
+```
+
 #### `Product`
 **Описывает структуру одного товара из каталога.**
 ```ts
@@ -255,7 +265,7 @@ interface BasketItem {
 **Формат отправки и получения данных при оформлении заказа.**
 ```ts
 interface OrderRequest {
-  payment: string;
+  payment: PaymentMethod;
   email: string;
   phone: string;
   address: string;
@@ -459,7 +469,3 @@ OrderFormView показывает поля доставки и оплаты. П
 
 
 ![UML-архитектура проекта](./docs/uml.png)
-
-
-
-
