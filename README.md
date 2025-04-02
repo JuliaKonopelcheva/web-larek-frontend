@@ -235,7 +235,6 @@ type ClickEventTarget = HTMLElement | null;
 ## Модели (Model)
 
 ### ApiService
-**Класс для работы с сервером. Реализует интерфейс `IApiService`.**
 
 ***Назначение:*** `ApiService` инкапсулирует логику HTTP-запросов и использует базовый URL из .env. Предоставляет методы для получения товаров и оформления заказа. Реализует интерфейс `IApiService`.
 
@@ -246,13 +245,12 @@ type ClickEventTarget = HTMLElement | null;
 - `baseUrl: string` — базовый URL API, берётся из переменной окружения или передаётся в конструктор. Используется при формировании всех запросов
 
 ***Методы:***
-- `getProducts()` — загружает список товаров с сервера
-- `getProductById(id)` — получает информацию о товаре по ID
-- `submitOrder(data)` — отправляет заказ на сервер
+- `getProducts(): Promise<Product[]>` — загружает список товаров с сервера
+- `getProductById(id: string): Promise<Product>` — получает информацию о товаре по ID
+- `submitOrder(data: OrderRequest): Promise<OrderResponse>` — отправляет заказ на сервер
 
 
 ### ProductModel
-**Работает с каталогом товаров.**
 
 ***Назначение:***
 Отвечает за загрузку и хранение списка товаров из API. Используется MainPresenter для получения каталога и обновления отображения.
@@ -266,32 +264,30 @@ type ClickEventTarget = HTMLElement | null;
 
 ***Методы:***
 - `loadProducts(): void` — загружает список товаров с API
-- `getProducts(): Product[]` — возвращает текущий список товаров.
+- `getProducts(): Product[]` — возвращает текущий список товаров
 - `getProductById(id: string): Product | undefined` — ищет товар по ID в массиве products
 -	`emit('products:changed')` — событие после успешной загрузки каталога
 
 ### BasketModel
-**Отслеживает товары в корзине.**
 
 ***Назначение:***
 Управляет содержимым корзины. Отвечает за добавление, удаление, очистку и хранение списка выбранных товаров.
 
 ***Конструктор:***
-- `new Set()` —  пустое множество.
+- `new Set()` —  пустое множество
 
 ***Поля класса:***
 - `items` — множество `(Set)`, в котором хранятся productId
 
 ***Методы:***
-- `addItem(productId)` — добавляет товар в корзину
--	`removeItem(productId)` — удаляет товар из корзины
+- `addItem(productId: string): void` — добавляет товар в корзину
+-	`removeItem(productId: string): void` — удаляет товар из корзины
 -	`emit('basket:changed')` — событие при изменении содержимого корзины
 - `getItems(): BasketItem[]` - возвращает массив объектов корзины с полем productId
 - `clear(): void` - полностью очищает корзину
 
 
 ### OrderModel
-**Хранит данные текущего заказа.**
 
 ***Назначение:***
 Хранит данные заказа — адрес, контакты, товары и способ оплаты. Используется при отправке заказа на сервер.
@@ -300,21 +296,21 @@ type ClickEventTarget = HTMLElement | null;
 - `constructor()`
 
 ***Поля класса:***
-- `payment` — выбранный способ оплаты.
-- `address` — адрес доставки.
-- `email, phone` — контакты покупателя.
-- `items` — список ID товаров.
+- `payment: PaymentMethod` — выбранный способ оплаты
+- `address: string;` — адрес доставки
+- `email: string` — контакты покупателя
+- `phone: string` — контакты покупателя
+- `items: string[]` — список ID товаров
 
 ***Методы:***
-- `setPayment(method)` — сохраняет способ оплаты.
-- `setAddress(value)` — сохраняет адрес.
-- `setContacts(email, phone)` — сохраняет контакты.
-- `setItems(items)` — сохраняет товары.
--	`toJSON()` — возвращает данные заказа для отправки на сервер
+- `setPayment(method: PaymentMethod): void` — сохраняет способ оплаты
+- `setAddress(value: string): void` — сохраняет адрес
+- `setContacts(email: string, phone: string): void` — сохраняет контакты
+- `setItems(items: string[]): void` — сохраняет товары
+-	`toJSON(): OrderRequest` — возвращает данные заказа для отправки на сервер
 
 
 ### AppStateModel
-**Хранит текущее состояние модального окна.**
 
 ***Назначение:***
 `AppStateModel` используется презентером для управления модальным интерфейсом: открытия, переключения между шагами оформления и закрытия по завершении.
@@ -323,12 +319,12 @@ type ClickEventTarget = HTMLElement | null;
 - `constructor()`
 
 ***Поля класса:***
-- `modal` — текущее состояние модального окна
+- `modal: ModalType` — текущее состояние модального окна
 
 ***Методы:***
 - `setModal(modal: ModalType)` — устанавливает активное модальное окно (например, `'basket'`, `'order'`, `'success'`)
-- `clearModal()` — сбрасывает текущее состояние модального окна (например, при закрытии или завершении заказа)
-- `getModal()` — возвращает текущий тип окна
+- `clearModal(): void` — сбрасывает текущее состояние модального окна (например, при закрытии или завершении заказа)
+- `getModal(): ModalType` — возвращает текущий тип окна
 
 ---
 
