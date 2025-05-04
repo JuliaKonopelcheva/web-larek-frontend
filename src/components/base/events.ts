@@ -1,91 +1,43 @@
-// Хорошая практика даже простые типы выносить в алиасы
-// Зато когда захотите поменять это достаточно сделать в одном месте
-type EventName = string | RegExp;
-type Subscriber = Function;
-type EmitterEvent = {
-    eventName: string,
-    data: unknown
-};
+import { IEvents, EventMap, EmitterEvent } from "../../types"; 
 
-export interface IEvents {
-    on<T extends object>(event: EventName, callback: (data: T) => void): void;
-    emit<T extends object>(event: string, data?: T): void;
-    trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void;
-}
-
-/**
- * Брокер событий, классическая реализация
- * В расширенных вариантах есть возможность подписаться на все события
- * или слушать события по шаблону например
- */
+// Брокер событий 
 export class EventEmitter implements IEvents {
-    _events: Map<EventName, Set<Subscriber>>;
+	private _events = new Map<string | RegExp, Set<Function>>();
 
-    constructor() {
-        this._events = new Map<EventName, Set<Subscriber>>();
-    }
+	on<K extends keyof EventMap>(eventName: K, callback: (data: EventMap[K]) => void): void {
+		if (!this._events.has(eventName)) {
+			this._events.set(eventName, new Set());
+		}
+		this._events.get(eventName)!.add(callback);
+	}
 
-    /**
-     * Установить обработчик на событие
-     */
-    on<T extends object>(eventName: EventName, callback: (event: T) => void) {
-        if (!this._events.has(eventName)) {
-            this._events.set(eventName, new Set<Subscriber>());
-        }
-        this._events.get(eventName)?.add(callback);
-    }
+	off<K extends keyof EventMap>(eventName: K, callback: (data: EventMap[K]) => void): void {
+		this._events.get(eventName)?.delete(callback);
+		if (this._events.get(eventName)?.size === 0) {
+			this._events.delete(eventName);
+		}
+	}
 
-    /**
-     * Снять обработчик с события
-     */
-    off(eventName: EventName, callback: Subscriber) {
-        if (this._events.has(eventName)) {
-            this._events.get(eventName)!.delete(callback);
-            if (this._events.get(eventName)?.size === 0) {
-                this._events.delete(eventName);
-            }
-        }
-    }
+	emit<K extends keyof EventMap>(eventName: K, data: EventMap[K]): void {
+		for (const [name, subscribers] of this._events.entries()) {
+			if (name === '*' || name === eventName || (name instanceof RegExp && name.test(eventName))) {
+				subscribers.forEach(cb => cb(name === '*' ? { eventName, data } : data));
+			}
+		}
+	}
 
-    /**
-     * Инициировать событие с данными
-     */
-    emit<T extends object>(eventName: string, data?: T) {
-        this._events.forEach((subscribers, name) => {
-            if (name === '*') subscribers.forEach(callback => callback({
-                eventName,
-                data
-            }));
-            if (name instanceof RegExp && name.test(eventName) || name === eventName) {
-                subscribers.forEach(callback => callback(data));
-            }
-        });
-    }
+	onAll(callback: (event: EmitterEvent) => void): void {
+		this.on('*' as keyof EventMap, callback as unknown as (data: EventMap[keyof EventMap]) => void);
+	}
 
-    /**
-     * Слушать все события
-     */
-    onAll(callback: (event: EmitterEvent) => void) {
-        this.on("*", callback);
-    }
+	offAll(): void {
+		this._events.clear();
+	}
 
-    /**
-     * Сбросить все обработчики
-     */
-    offAll() {
-        this._events = new Map<string, Set<Subscriber>>();
-    }
+	trigger<K extends keyof EventMap>(eventName: K, context?: Partial<EventMap[K]>): (data: EventMap[K]) => void {
+		return (data: EventMap[K]) => {
+			this.emit(eventName, { ...context, ...data } as EventMap[K]);
+		};
+	}
 
-    /**
-     * Сделать коллбек триггер, генерирующий событие при вызове
-     */
-    trigger<T extends object>(eventName: string, context?: Partial<T>) {
-        return (event: object = {}) => {
-            this.emit(eventName, {
-                ...(event || {}),
-                ...(context || {})
-            });
-        };
-    }
 }
-

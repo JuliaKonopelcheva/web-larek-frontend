@@ -1,34 +1,22 @@
-// ========================
-//       ДАННЫЕ С API
-// ========================
+import { ApiListResponse } from "../components/base/api";
+
+// ДАННЫЕ С API
 
 // Методы для работы с сервером (используются в ApiService)
 export interface IApiService {
-	getProducts(): Promise<ProductListResponse>;
-	getProductById(id: string): Promise<Product>;
-	submitOrder(data: OrderRequest): Promise<OrderResponse>;
+	getProducts: () => Promise<ProductListResponse>;
+	getProductById: (id: string) => Promise<Product>;
+	submitOrder: (data: OrderRequest) => Promise<OrderResponse>;
 }
 
 // Интерфейс карточки товара (приходит с сервера)
 export interface Product {
 	id: string;
-	title: string;
 	description: string;
 	image: string;
+	title: string;
 	category: string;
 	price: number | null; // В интерфейсе отображается: либо `${price} синапсов`, либо 'Бесценно'
-}
-
-// Ответ от сервера при запросе всех товаров
-export interface ProductListResponse {
-	total: number;
-	items: Product[];
-}
-
-// Один товар в корзине
-export interface BasketItem {
-	productId: string;
-	quantity: number;  // возможно не нужен будет, товар определяется по id и может быть только один
 }
 
 // Интерфейс пользователя
@@ -47,116 +35,128 @@ export interface OrderResponse {
 	total: number;
 }
 
-// Адрес доставки (первый шаг формы)
-export interface ShippingAddress {
-	address: string;
-}
-
 // Контактные данные пользователя (второй шаг формы)
 export interface UserContact {
 	email: string;
 	phone: string;
 }
 
-// ========================
-//         ТИПЫ
-// ========================
+// ТИПЫ
+
+
+// Ответ от сервера при запросе всех товаров
+export type ProductListResponse = ApiListResponse<Product>;
 
 // Возможные модальные окна в приложении
 export type ModalType = 'product' | 'basket' | 'order' | 'contacts' | 'success' | null;
 
 // Доступные способы оплаты
-export type PaymentMethod = 'online' | 'cash';
-
-// Этапы оформления заказа (для переходов между шагами)
-export enum FormStep {
-	Order = 'order',
-	Contacts = 'contacts',
-	Success = 'success'
-}
-
-// Тип для обработки кликов — может быть элемент или null
-export type ClickEventTarget = HTMLElement | null;
+export type PaymentMethod = 'card' | 'cash';
 
 
-// ========================
-//     ИНТЕРФЕЙСЫ МОДЕЛЕЙ
-// ========================
+// ИНТЕРФЕЙСЫ МОДЕЛЕЙ
+
 
 // Интерфейс модели товаров
 export interface IProductModel {
-	loadProducts(): void;
-	getProductById(id: string): Product;
+	setProducts(products: Product[]): void;
+	getProducts(): Product[];
+	getProductById(id: string): Product | undefined;
 }
 
 // Интерфейс модели корзины
 export interface IBasketModel {
-	addToBasket(productId: string): void;
-	removeFromBasket(productId: string): void;
-	getBasketItems(): BasketItem[];
+	addItem(product: Product): void;
+	removeItem(productId: string): void;
+	getItems(): Product[];
+	clear(): void;
+	getTotal(): number;
 }
 
 // Интерфейс модели заказа
 export interface IOrderModel {
 	setAddress(address: string): void;
-	setContacts(data: UserContact): void;
+	setContacts(email: string, phone: string): void;
 	setPayment(method: PaymentMethod): void;
-	buildOrderRequest(): OrderRequest;
+	validateOrder(address: string): void;
+	validateContacts(email: string, phone: string): void;
 }
 
 // Интерфейс состояния приложения
 export interface IAppStateModel {
-  getModal(): ModalType;
-  setModal(modal: ModalType): void;
-  clearModal(): void;
+	getModal(): ModalType;
+	getCurrentId(): string;
+	getProductsLoaded(): boolean;
+	setState(modal: ModalType, productsLoaded?: boolean, productId?: string): void;
+	clearModal(): void;
 }
 
+// ИНТЕРФЕЙСЫ VIEW
 
-// ========================
-//     ИНТЕРФЕЙСЫ VIEW
-// ========================
 
 // Базовый интерфейс представления (карточки, формы и т.п.)
-export interface IView {
-	render(): HTMLElement;
-	bindEvents(): void;
+export interface IView<T> {
+	render(data?: Partial<T>): HTMLElement;
 }
 
-// Расширенный интерфейс для модального окна
-export interface IModalView extends IView {
-	open(): void;
-	close(): void;
-	setContent(content: HTMLElement): void;
-	bindClose(): void;
+// Базовый интерфейс форм
+export interface IFormView<T> extends IView<T> {
+	updateFormState(isValid: boolean, message?: string): void;
 }
 
-// export interface IBasketItemView extends IView {}
-// export interface IBasketView extends IView {}
-// export interface IOrderFormView extends IView {}
-// export interface IContactsFormView extends IView {}
-// export interface ISuccessView extends IView {}
-// export interface IGalleryCardView extends IView {}
-// export interface IModalCardView extends IView {}
+// ИНТЕРФЕЙС BROKER / EVENTS
 
-
-// ========================
-//   ИНТЕРФЕЙС ПРЕЗЕНТЕРА
-// ========================
-
-export interface IMainPresenter {
-  init(): void;
-  submitOrder(): void;
-  validateForm(): boolean;
-}
-
-
-// ========================
-//   ИНТЕРФЕЙС BROKER / EVENTS
-// ========================
 
 // Интерфейс для работы с EventEmitter (подписка и вызов событий)
-export interface IEventEmitter {
-	on(event: string, callback: (...args: any[]) => void): void;
-	off(event: string, callback: (...args: any[]) => void): void;
-	emit(event: string, data?: any): void;
+export interface EventMap {
+	// AppState / модальные окна
+	'modal:null': { productsLoaded: boolean };
+	'modal:product': { productId: string };
+	'modal:basket': void;
+	'modal:order': void;
+	'modal:contacts': void;
+	'modal:success': void;
+	'modal:closed': void;
+
+	// продукты
+	'products:changed': { products: Product[] };
+	'product:open': { productId: string };
+	'product:add': { product: Product };
+	'product:remove': { productId: string };
+
+	// корзина
+	'basket:open': void;
+	'basket:changed': { items: Product[]; total: number };
+
+	// заказ
+	// шаг 1
+    'order:open': void;
+	'order:update': { address: string; payment: PaymentMethod };
+	'order:submit': { address: string; payment: PaymentMethod };
+    'order:validation' : { isValid: boolean };
+
+	// шаг 2
+    'contacts:open' : void;
+	'contacts:update': { email: string; phone: string };
+	'contacts:submit': { email: string; phone: string };
+    'contacts:validation' : { isValid: boolean, isEmailValid: boolean, isPhoneValid: boolean};
+
+	// success
+	'success:close': void;
+
+}
+
+export type EmitterEvent = {
+    eventName: string,
+    data: unknown
+};
+
+//иинтерфейс самого EventEmitter
+export interface IEvents {
+	on<K extends keyof EventMap>(event: K, callback: (data: EventMap[K]) => void): void;
+	off<K extends keyof EventMap>(event: K, callback: (data: EventMap[K]) => void): void;
+	emit<K extends keyof EventMap>(event: K, data: EventMap[K]): void;
+	trigger<K extends keyof EventMap>(event: K, context?: Partial<EventMap[K]>): (data: EventMap[K]) => void;
+	onAll(callback: (event: EmitterEvent) => void): void;
+	offAll(): void;
 }
