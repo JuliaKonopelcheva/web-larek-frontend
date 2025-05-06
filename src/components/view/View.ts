@@ -1,28 +1,51 @@
 import { IView } from "../../types";
 
 export abstract class View<T> implements IView<T> {
-    protected constructor(protected readonly container: HTMLElement) {}
-  
-    /**
-     * Навесить обработчик события.
-     */
-    protected bindEvent<K extends keyof HTMLElementEventMap>(
-        element: HTMLElement | null,
-        type: K,
-        handler: (event: HTMLElementEventMap[K]) => any,
-        options?: boolean | AddEventListenerOptions
-    ): void {
-        if (element) {
-          element.addEventListener(type, handler as EventListener, options);
-        }
-    }
+  protected constructor(protected readonly container: HTMLElement) {}
 
-    /**
+  /**
+   * Навесить обработчик события.
+   */
+  protected bindEvent<K extends keyof HTMLElementEventMap>(
+      element: HTMLElement | null,
+      type: K,
+      handler: (event: HTMLElementEventMap[K]) => any,
+      options?: boolean | AddEventListenerOptions
+  ): void {
+      if (element) {
+        element.addEventListener(type, handler as EventListener, options);
+      }
+  }
+
+  /**
 	 * Переключить класс
-     */
-	toggleClass(element: HTMLElement, className: string, force?: boolean): void {
+   */
+	protected toggleClass(element: HTMLElement, className: string, force?: boolean): void {
 		element.classList.toggle(className, force);
 	}
+
+  /**
+   * Удалить классы
+   */
+  protected removeClasses(element: HTMLElement | null, ...classes: string[]): void {
+    if (element) {
+      element.classList.remove(...classes);
+    }
+  }
+  
+  /**
+   * Удаляет все классы у элемента, начинающиеся с указанного префикса.
+   */
+  protected removeClassByPrefix(element: HTMLElement | null, prefix: string): void {
+    if (!element) return;
+  
+    const matchingClasses = Array.from(element.classList).filter(className => 
+      className.startsWith(prefix)
+    );
+  
+    this.removeClasses(element, ...matchingClasses);
+  }
+  
     /**
      * Установить текстовое содержимое элемента.
      */

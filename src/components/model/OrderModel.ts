@@ -1,60 +1,87 @@
-import { PaymentMethod, IOrderModel } from "../../types";
-import { IEvents } from '../../types';
+// импортируем интерфейсы
+import { IEvents, 
+	IOrderModel, 
+	OrderModelData, 
+	OrderErrors, 
+	OrderValidator 
+} from "../../types";
 
+/*
+	класс для работы с данными, требующими валидации
+*/
 export class OrderModel implements IOrderModel {
-	private payment: PaymentMethod = 'card';
-	private address: string = '';
-	private email: string = '';
-	private phone: string = '';
+// данные
+	private order: OrderModelData = {
+		payment: 'card',
+		address: '',
+		email: '',
+		phone: '',
+}
+		
+// способы валидации
+private validator: OrderValidator = {
+		payment: (payment) => true, // пользователь не может ввести некорректный способ оплаты
+		address: (address) => !!address, // остальные поля проверяются только на заполненость
+		email: (email) => !!email,
+		phone: (phone) => !!phone,
+}
+
+// элементы сообщений об ошибках
+private errors: OrderErrors = {
+	payment: 'способ оплаты',
+	address: 'адрес',
+	email: 'почту',
+	phone: 'телефон',
+}
 
 	constructor(private events: IEvents) {}
-
-	// Установка способа оплаты
-	setPayment(method: PaymentMethod): void {
-		this.payment = method;
+	// установка значения в поле данных
+	setField<K extends keyof OrderModelData>(field: K, value: OrderModelData[K]) : void {
+		this.order[field] = value;
+		this.events.emit('order:changed', this.order);
 	}
 
-	// Установка адреса доставки
-	setAddress(value: string): void {
-		this.address = value.trim();
+	// очистка данных
+	clear() : void {
+		this.order = {
+			payment: 'card',
+			address: '',
+			email: '',
+			phone: '',
+		}
+		this.events.emit('order:changed', this.order);
 	}
 
-	// Установка контактов
-	setContacts(email: string, phone: string): void {
-		this.email = email.trim();
-		this.phone = phone.trim();
+	// получение поля данных по ключу
+	getField<K extends keyof OrderModelData>(field: K) : OrderModelData[K] {
+		return this.order[field];
 	}
 
-    // Валидация контактов
-    validateContacts(email: string, phone: string): void {
-//      console.log('[Model] validating:', email, phone);
-        const isEmailValid = this.validateEmail(email);
-        const isPhoneValid = this.validatePhone(phone);
-    
-        const isValid = isEmailValid && isPhoneValid;
-    
-        this.events.emit('contacts:validation', {
-            isValid,
-            isEmailValid,
-            isPhoneValid
-        });
-    }
-
-    // Валидация адреса
-    validateOrder(address: string): void {
-        const isValid = address.trim().length > 0;
-        this.events.emit('order:validation', {
-            isValid
-        });
-    }
-
-	// Валидатор email
-	private validateEmail(email: string): boolean {
-		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+	// получение всех полей
+	getData() : OrderModelData {
+		return this.order;
 	}
 
-	// Валидатор телефона
-	private validatePhone(phone: string): boolean {
-		return /^[\d\s()+-]{5,}$/.test(phone.trim());
+	// валидация 
+	validate(): OrderErrors {
+		const result: Partial<OrderErrors> = {};
+
+		// Перебираем все поля в заказе
+		for (const key in this.order) {
+			const field = key as keyof OrderModelData;
+
+			// Получаем значение и функцию-валидатор
+			const value = this.order[field];
+			const validator = this.validator[field] as (v: typeof value) => boolean;
+
+			// Применяем валидатор
+			if (!validator(value)) {
+				result[field] = this.errors[field];
+			}
+		}
+		console.log(result);
+		return result as OrderErrors;
 	}
 }
+
+

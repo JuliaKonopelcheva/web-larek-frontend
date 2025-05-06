@@ -49,11 +49,11 @@ export class Card extends View<ICard> {
 			this.remove = ensureElement<HTMLButtonElement>('.basket__item-delete', container);
 		}
 
-        // Клик на карточку в галерее — открыть модалку
-	    if (variant === 'gallery' && events) {
-		    this.bindEvent(container, 'click', () => {
-			    const id = container.dataset.productId;
-			    if (id) events.emit('product:open', { productId: id });
+		// Клик на карточку в галерее — открыть модалку
+		if (variant === 'gallery' && events) {
+			this.bindEvent(container, 'click', () => {
+				const id = container.dataset.productId;
+				if (id) events.emit('product:open', { productId: id });
 		});
 	}
 	}
@@ -71,31 +71,25 @@ export class Card extends View<ICard> {
 		}
 
 		if (this.category) {
-            this.setText(this.category, product.category);
-        
-            // Удаляем все старые классы-модификаторы
-            this.category.classList.remove(
-                'card__category_soft',
-                'card__category_hard',
-                'card__category_other',
-                'card__category_additional',
-                'card__category_button'
-            );
-        
-            // Сопоставление названия категории и класса
-            const categoryMap: Record<string, string> = {
-                'софт-скил': 'card__category_soft',
-                'хард-скил': 'card__category_hard',
-                'другое': 'card__category_other',
-                'дополнительное': 'card__category_additional',
-                'кнопка': 'card__category_button'
-            };
-        
-            const className = categoryMap[product.category.toLowerCase()];
-            if (className) {
-                this.category.classList.add(className);
-            }
-        }
+			this.setText(this.category, product.category);
+	
+			// Удаляем все старые классы-модификаторы
+			this.removeClassByPrefix(this.category, 'card__category_');
+	
+			// Сопоставление названия категории и класса
+			const categoryMap: Record<string, string> = {
+					'софт-скил': 'card__category_soft',
+					'хард-скил': 'card__category_hard',
+					'другое': 'card__category_other',
+					'дополнительное': 'card__category_additional',
+					'кнопка': 'card__category_button'
+			};
+	
+			const className = categoryMap[product.category.toLowerCase()];
+			if (className) {
+				this.toggleClass(this.category, className, true);
+			}
+    }
 
 		if (this.description) {
 			this.setText(this.description, product.description);
@@ -110,10 +104,10 @@ export class Card extends View<ICard> {
 			this.setText(this.button, this.inBasket ? 'Удалить из корзины' : 'В корзину');
 
 			this.bindEvent(this.button, 'click', () => {
-this.events!.emit(
-	this.inBasket ? 'product:remove' : 'product:add',
-	this.inBasket ? { productId: product.id } : { product }
-);
+				this.events!.emit(
+					this.inBasket ? 'product:remove' : 'product:add',
+					this.inBasket ? { productId: product.id } : { product }
+			);
 			});
 		}
 

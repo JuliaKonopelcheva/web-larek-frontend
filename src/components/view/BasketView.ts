@@ -1,13 +1,9 @@
 import { View } from './View';
-import { Product, PaymentMethod } from '../../types';
+import { Product, IBasket } from '../../types';
 import { ensureElement } from '../../utils/utils';
 import { IEvents } from '../../types';
 import { Card } from './Card';
 
-export interface IBasket {
-	products: Product[];
-	total: number;
-}
 
 export class BasketView extends View<IBasket> {
 	private list: HTMLElement;
@@ -29,15 +25,9 @@ export class BasketView extends View<IBasket> {
 	render(data: IBasket): HTMLElement {
 		this.list.innerHTML = '';
 
-		data.products.forEach((product, index) => {
-			const template = ensureElement<HTMLTemplateElement>('#card-basket');
-			const basketElement = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+		data.items.forEach((item) => this.list.appendChild(item));
 
-			const card = new Card(basketElement, 'basket', this.events);
-			this.list.appendChild(card.render({ product, variant: 'basket' }, index + 1));
-		});
-
-        this.submit.disabled = data.products.some((p) => p.price === null) || data.products.length === 0;
+		this.setDisabled(this.submit, data.products.some((p) => p.price === null) || data.products.length === 0);
 		this.setText(this.total, 
 			data.products.some((p) => p.price === null)
 			  ? '\u221E синапсов'

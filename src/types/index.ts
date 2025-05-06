@@ -35,11 +35,6 @@ export interface OrderResponse {
 	total: number;
 }
 
-// Контактные данные пользователя (второй шаг формы)
-export interface UserContact {
-	email: string;
-	phone: string;
-}
 
 // ТИПЫ
 
@@ -52,6 +47,38 @@ export type ModalType = 'product' | 'basket' | 'order' | 'contacts' | 'success' 
 
 // Доступные способы оплаты
 export type PaymentMethod = 'card' | 'cash';
+
+// Типы модели заказа
+// Данные
+export type OrderModelData = OrderData & UserContact;
+// Сообщения об ошибках
+export type Errors<T> = {[K in keyof T]: string };
+export type OrderErrors = Errors<OrderModelData>;
+// Способы валидации
+export type Validator<T> = { [K in keyof T]: (value: T[K]) => boolean };
+export type OrderValidator = Validator<OrderModelData>;
+
+// Типы данных форм
+// Базовый тип данных формы
+export interface FormData {
+	isValid?: boolean;
+	message?: string;
+}
+
+// Тип формы заказа
+export interface OrderData extends FormData {
+	address: string;
+	payment: PaymentMethod; // 'card' | 'cash'
+}
+
+// Тип формы контактов
+export interface UserContact extends FormData {
+	email: string;
+	phone: string;
+}
+
+
+
 
 
 // ИНТЕРФЕЙСЫ МОДЕЛЕЙ
@@ -75,11 +102,11 @@ export interface IBasketModel {
 
 // Интерфейс модели заказа
 export interface IOrderModel {
-	setAddress(address: string): void;
-	setContacts(email: string, phone: string): void;
-	setPayment(method: PaymentMethod): void;
-	validateOrder(address: string): void;
-	validateContacts(email: string, phone: string): void;
+	setField<K extends keyof OrderModelData>(field: K, value: OrderModelData[K]) : void;
+	clear() : void;
+	getField<K extends keyof OrderModelData>(field: K) : OrderModelData[K];
+	getData() : OrderModelData;
+	validate(): Partial<OrderErrors>;
 }
 
 // Интерфейс состояния приложения
@@ -101,8 +128,17 @@ export interface IView<T> {
 
 // Базовый интерфейс форм
 export interface IFormView<T> extends IView<T> {
-	updateFormState(isValid: boolean, message?: string): void;
+	updateFormState(data: FormData): void;
+	render(data?: Partial<T>): HTMLElement
 }
+
+// Интерфейс корзины
+export interface IBasket {
+	products: Product[];
+	total: number;
+	items: HTMLElement[];
+}
+
 
 // ИНТЕРФЕЙС BROKER / EVENTS
 
@@ -129,17 +165,20 @@ export interface EventMap {
 	'basket:changed': { items: Product[]; total: number };
 
 	// заказ
+  // модель
+	'order:changed': {address: string; payment: PaymentMethod; email: string; phone: string };
+
 	// шаг 1
-    'order:open': void;
-	'order:update': { address: string; payment: PaymentMethod };
+  'order:open': void;
+	'order:update': { address?: string; payment?: PaymentMethod };
 	'order:submit': { address: string; payment: PaymentMethod };
-    'order:validation' : { isValid: boolean };
+  'order:validation' : { isValid: boolean };
 
 	// шаг 2
-    'contacts:open' : void;
-	'contacts:update': { email: string; phone: string };
+  'contacts:open' : void;
+	'contacts:update': { email?: string; phone?: string };
 	'contacts:submit': { email: string; phone: string };
-    'contacts:validation' : { isValid: boolean, isEmailValid: boolean, isPhoneValid: boolean};
+  'contacts:validation' : { isValid: boolean, isEmailValid: boolean, isPhoneValid: boolean};
 
 	// success
 	'success:close': void;

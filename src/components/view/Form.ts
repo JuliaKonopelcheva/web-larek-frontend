@@ -1,11 +1,8 @@
 
 import { View } from './View';
 import { ensureElement } from '../../utils/utils';
-import { IEvents, IFormView } from '../../types'; 
+import { IEvents, IFormView, FormData} from '../../types'; 
 
-export interface FormData {
-	isValid?: boolean;
-}
 
 export abstract class FormView<T extends FormData> extends View<T> implements IFormView<T> {
 	protected form: HTMLFormElement;
@@ -23,19 +20,34 @@ export abstract class FormView<T extends FormData> extends View<T> implements IF
 			e.preventDefault();
 			this.onSubmit();
 		});
+
+		this.bindEvent(this.form, 'input', (e) => {
+			e.preventDefault();
+			this.emitUpdate();
+		});
+
 	}
 
 	/**
-	 * Реализуется в наследниках — возвращает данные и вызывает событие
+	 * Реализуется в наследниках — вызывает событие submit c данными типа T
 	 */
-	protected abstract onSubmit(): void;
+	protected abstract onSubmit(): void /*{
+		this.events.emit(`${container.name}:submit`, data: T);
+	}*/
+
+	/**
+	 * Реализуется в наследниках — вызывает событие update c данными типа Partial<T>
+	 */
+	protected abstract emitUpdate(): void /*{
+		this.events.emit(`${container.name}:update`, data: Partial<T>);
+	}*/
 
 	/**
 	 * Управление состоянием формы (кнопка и сообщение)
 	 */
-	public updateFormState(isValid: boolean, message?: string): void {
-		this.submit.disabled = !isValid;
-		this.errors.textContent = message ?? '';
+	public updateFormState(data: FormData): void {
+		this.submit.disabled = !data.isValid;
+		this.errors.textContent = data.message ?? '';
 	}
 
 	/**

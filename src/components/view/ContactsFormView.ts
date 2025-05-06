@@ -1,11 +1,7 @@
-import { FormView, FormData } from './Form';
+import { FormView } from './Form';
 import { ensureElement } from '../../utils/utils';
-import { IEvents } from '../../types';
+import { IEvents, FormData, UserContact } from '../../types';
 
-export interface UserContact extends FormData {
-	email: string;
-	phone: string;
-}
 
 export class ContactsFormView extends FormView<UserContact> {
 	private email: HTMLInputElement;
@@ -17,17 +13,6 @@ export class ContactsFormView extends FormView<UserContact> {
 		this.email = ensureElement<HTMLInputElement>('input[name="email"]', container);
 		this.phone = ensureElement<HTMLInputElement>('input[name="phone"]', container);
 
-		// Обновления по мере ввода
-		this.bindEvent(this.email, 'input', () => this.emitUpdate());
-		this.bindEvent(this.phone, 'input', () => this.emitUpdate());
-	}
-
-    private emitUpdate(): void {
-//      console.log('[Form] emitting contacts:update');
-		this.events.emit('contacts:update', {
-			email: this.email.value.trim(),
-			phone: this.phone.value.trim()
-		});
 	}
 
 	protected onSubmit(): void {
@@ -36,6 +21,14 @@ export class ContactsFormView extends FormView<UserContact> {
 			phone: this.phone.value.trim()
 		});
 	}
+
+	protected emitUpdate(): void {
+		//  console.log('[Form] emitting contacts:update');
+				this.events.emit('contacts:update', {
+					email: this.email.value.trim(),
+					phone: this.phone.value.trim()
+				});
+			}
 
 	override render(data?: Partial<UserContact>): HTMLElement {
 		if (data?.email !== undefined) {
