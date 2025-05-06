@@ -87,6 +87,24 @@ export abstract class View<T> implements IView<T> {
     }
   
     /**
+     * Установить текст в поле ввода.
+     */
+    protected setInputValue(element: HTMLInputElement | null, value: string | undefined): void {
+      if (element && typeof value === 'string') {
+        element.value = value;
+      }
+    }    
+
+    /**
+     * Очистить родительский элемент.
+     */
+    protected clearChildren(element: HTMLElement): void {
+      while (element.firstChild) {
+        element.removeChild(element.firstChild);
+      }
+    }
+
+    /**
      * Абстрактный метод отрисовки — обязателен в каждом потомке.
      */
     abstract render(data?: Partial<T>): HTMLElement;

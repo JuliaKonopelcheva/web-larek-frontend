@@ -78,13 +78,12 @@ export class OrderFormView extends FormView<OrderData> {
 	
 	// Отрисовка данных в форме
 	override render(data?: Partial<OrderData>): HTMLElement {
-		if (data?.address !== undefined) {
-			this.address.value = data.address;
-		}
+		this.setInputValue(this.address, data?.address);
 		if (data?.payment !== undefined) {
 			this.setPayment(data.payment);
 		}
 		return super.render(data);
 	}
+	
 }
 

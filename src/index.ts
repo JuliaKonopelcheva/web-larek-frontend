@@ -10,13 +10,10 @@ import { ProductModel } from './components/model/Product';
 import { BasketModel } from './components/model/BasketModel';
 import { OrderModel } from './components/model/OrderModel';
 import { AppStateModel } from './components/model/AppState';
-import { IEvents } from './types'; 
 import { PageView } from './components/view/Page';
 import { ModalView } from './components/view/Modal';
-import { Card } from './components/view/Card';
 import { OrderFormView } from './components/view/OrderFormView';
 import { ContactsFormView } from './components/view/ContactsFormView';
-import { OrderRequest, PaymentMethod } from './types';
 import { SuccessView } from './components/view/SuccessView';
 import { BasketView } from './components/view/BasketView';
 

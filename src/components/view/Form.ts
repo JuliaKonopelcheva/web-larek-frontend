@@ -1,4 +1,3 @@
-
 import { View } from './View';
 import { ensureElement } from '../../utils/utils';
 import { IEvents, IFormView, FormData} from '../../types'; 
@@ -46,15 +45,15 @@ export abstract class FormView<T extends FormData> extends View<T> implements IF
 	 * Управление состоянием формы (кнопка и сообщение)
 	 */
 	public updateFormState(data: FormData): void {
-		this.submit.disabled = !data.isValid;
-		this.errors.textContent = data.message ?? '';
+		this.setDisabled(this.submit, !data.isValid);
+		this.setText(this.errors, data.message ?? '');
 	}
 
 	/**
 	 * Отрисовка формы
 	 */
 	public render(data?: Partial<T>): HTMLElement {
-		this.submit.disabled = data?.isValid === false;
+		this.setDisabled(this.submit, data?.isValid === false);
 		return this.container;
 	}
 }

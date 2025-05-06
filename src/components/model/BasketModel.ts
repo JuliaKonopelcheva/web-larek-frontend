@@ -48,4 +48,9 @@ export class BasketModel implements IBasketModel {
 	getTotal(): number {
 		return this.items.reduce((sum, item) => sum + (item.price ?? 0), 0);
 	}
+
+	removeItemsWithNullPrice(): void {
+		this.items = this.items.filter(item => item.price !== null);
+		this.emitBasketChanged();
+	}
 }

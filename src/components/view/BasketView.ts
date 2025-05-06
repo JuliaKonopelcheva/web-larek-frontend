@@ -1,8 +1,7 @@
 import { View } from './View';
-import { Product, IBasket } from '../../types';
+import { IBasket } from '../../types';
 import { ensureElement } from '../../utils/utils';
 import { IEvents } from '../../types';
-import { Card } from './Card';
 
 
 export class BasketView extends View<IBasket> {
@@ -23,16 +22,12 @@ export class BasketView extends View<IBasket> {
 	}
 
 	render(data: IBasket): HTMLElement {
-		this.list.innerHTML = '';
+		this.clearChildren(this.list);
 
 		data.items.forEach((item) => this.list.appendChild(item));
 
-		this.setDisabled(this.submit, data.products.some((p) => p.price === null) || data.products.length === 0);
-		this.setText(this.total, 
-			data.products.some((p) => p.price === null)
-			  ? '\u221E синапсов'
-			  : `${data.total} синапсов`
-		  );
+		this.setDisabled(this.submit, !data.total);
+		this.setText(this.total, `${data.total} синапсов`);
 		return this.container;
 	}
 }

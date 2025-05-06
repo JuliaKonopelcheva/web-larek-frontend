@@ -1,6 +1,6 @@
 import { FormView } from './Form';
 import { ensureElement } from '../../utils/utils';
-import { IEvents, FormData, UserContact } from '../../types';
+import { IEvents, UserContact } from '../../types';
 
 
 export class ContactsFormView extends FormView<UserContact> {
@@ -31,12 +31,8 @@ export class ContactsFormView extends FormView<UserContact> {
 			}
 
 	override render(data?: Partial<UserContact>): HTMLElement {
-		if (data?.email !== undefined) {
-			this.email.value = data.email;
-		}
-		if (data?.phone !== undefined) {
-			this.phone.value = data.phone;
-		}
+		this.setInputValue(this.email, data.email)
+		this.setInputValue(this.phone, data.phone)
 		return super.render(data);
 	}
 }

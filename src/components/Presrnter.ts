@@ -137,6 +137,7 @@ private registerEvents(): void {
 	// Шаг 1: доставка и оплата
 	// Открыть форму
 	this.events.on('order:open', () => {
+		this.basket.removeItemsWithNullPrice();
 		this.app.setState('order');
 	});
 
@@ -282,10 +283,9 @@ private registerEvents(): void {
 	});
 
     // Закрытие любого модального окна
-    this.events.on('modal:closed', () => {
-    //    console.log('modal closed')
-        this.page.render({ isLocked: false });
-    });
+		this.events.on('modal:closed', () => {
+			this.app.setState(null, false); // закрытие окна, без перерисовки главной
+		});
 }
 
 
@@ -303,11 +303,19 @@ alert('Не удалось оформить заказ. Попробуйте п�
 }
 
 private updatePage(): void {
+	const productCards = this.products.getProducts().map(product => {
+		const template = ensureElement<HTMLTemplateElement>('#card-catalog');
+		const container = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+		const card = new Card(container, 'gallery', this.events);
+		return card.render({ product, variant: 'gallery' });
+	});
+
 	this.page.render({
-		products: this.products.getProducts(),
+		products: productCards,
 		basketCount: this.basket.getItems().length
 	});
 }
+
 
 private getFormData(errors: OrderErrors, keys: (keyof OrderErrors)[]) : FormData {
 	const formErrors = Object.values(pickFields(errors, keys));

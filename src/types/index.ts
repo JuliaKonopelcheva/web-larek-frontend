@@ -77,6 +77,19 @@ export interface UserContact extends FormData {
 	phone: string;
 }
 
+// Интерфейс страницы
+export type IPage = {
+	products: HTMLElement[]; // теперь не Product[], а готовые карточки
+	basketCount: number;
+	isLocked?: boolean;
+};
+
+// Интерфейс корзины
+export interface IBasket {
+	products: Product[];
+	total: number;
+	items: HTMLElement[];
+}
 
 
 
@@ -98,6 +111,7 @@ export interface IBasketModel {
 	getItems(): Product[];
 	clear(): void;
 	getTotal(): number;
+	removeItemsWithNullPrice(): void
 }
 
 // Интерфейс модели заказа
@@ -130,13 +144,6 @@ export interface IView<T> {
 export interface IFormView<T> extends IView<T> {
 	updateFormState(data: FormData): void;
 	render(data?: Partial<T>): HTMLElement
-}
-
-// Интерфейс корзины
-export interface IBasket {
-	products: Product[];
-	total: number;
-	items: HTMLElement[];
 }
 
 
