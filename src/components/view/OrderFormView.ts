@@ -69,10 +69,11 @@ export class OrderFormView extends FormView<OrderData> {
 				});
 	}
 
-	 public override updateFormState(data: FormData, payment?: PaymentMethod): void {
-		if (payment !== undefined) {
-			this.setPayment(payment);
+	 public override updateFormState(data: Partial<OrderData>): void {
+		if (data.payment !== undefined) {
+			this.setPayment(data.payment);
 		}
+		this.updateInputValue(this.address, data.address);
 		super.updateFormState(data);
 	}
 	

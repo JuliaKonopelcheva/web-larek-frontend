@@ -30,6 +30,12 @@ export class ContactsFormView extends FormView<UserContact> {
 				});
 			}
 
+	 public override updateFormState(data: Partial<UserContact>): void {
+		this.updateInputValue(this.email, data.email);
+		this.updateInputValue(this.phone, data.phone);
+		super.updateFormState(data);
+	}
+
 	override render(data?: Partial<UserContact>): HTMLElement {
 		this.setInputValue(this.email, data.email)
 		this.setInputValue(this.phone, data.phone)

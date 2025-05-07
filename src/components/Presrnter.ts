@@ -142,26 +142,19 @@ private registerEvents(): void {
 	});
 
 	this.events.on('modal:order', () => {
-		const address = this.getAddress();
-		const payment = this.getPayment();
-
-
-	this.modal.render(this.orderView.render({
-		address, 
-		payment, 
-		isValid: false })); // при создании кнопка выключена
-
-	this.page.render({ isLocked: true });
-
-
-	//обновляем кнопку и сообщение
-	this.orderView.updateFormState(this.getFormData(
-		this.order.validate(),
-		['address', 'payment'] as (keyof OrderData)[]
-	))
-});
-
-
+		const orderKeys = ['address', 'payment'] as const;
+		const order = this.order.getData();
+		const errors = this.order.validate();
+		const formData = this.getFormData(errors, orderKeys);
+	
+		this.modal.render(this.orderView.render({
+			...formData,
+			...pickFields(order, orderKeys),
+		}));
+	
+		this.page.render({ isLocked: true });
+	});
+	
 	// изменение введенного текста
 	this.events.on('order:update', (data) => {
 		Object.entries(data).forEach(([k, v]) => {
@@ -170,12 +163,6 @@ private registerEvents(): void {
 		});
 	});
 
-	// возврат результатов валидации
-	/*
-    this.events.on('order:validation', ({ isValid }) => {
-        this.orderView?.updateFormState(isValid);
-    });
-	*/
     // переход к формек контактов 
 	this.events.on('order:submit', ({ address, payment }) => {
 		this.app.setState('contacts');
@@ -185,24 +172,19 @@ private registerEvents(): void {
 
 	//Открыть форму
 	this.events.on('modal:contacts', () => {
-		const email = this.getEmail();
-		const phone = this.getPhone();
-
-		this.modal.render(this.contactsView.render({ 
-			email, 
-			phone, 
-			isValid: false })); // при создании кнопка выключена, сообщений нет
-
+		const contactsKeys = ['email', 'phone'] as const;
+		const order = this.order.getData();
+		const errors = this.order.validate();
+		const formData = this.getFormData(errors, contactsKeys);
+	
+		this.modal.render(this.contactsView.render({
+			...formData,
+			...pickFields(order, contactsKeys),
+		}));
+	
 		this.page.render({ isLocked: true });
-
-	//обновляем кнопку и сообщение
-	this.contactsView.updateFormState(this.getFormData(
-		this.order.validate(),
-		['email', 'phone'] as (keyof UserContact)[]
-	))
-});
-
-
+	});
+	
 	// изменение введенного текста
 	this.events.on('contacts:update', (data) => {
 		Object.entries(data).forEach(([k, v]) => {
@@ -211,47 +193,37 @@ private registerEvents(): void {
 		});
 	});
 
-	// возврат результатов валидации
-  /*  this.events.on('contacts:validation', ({ isValid, isEmailValid, isPhoneValid }) => {
-
-		let message = '';
-		if (isEmailValid && !isPhoneValid) message = 'Введите корректный телефон';
-		else if (!isEmailValid && isPhoneValid) message = 'Введите корректный email';
-		else if (!isValid) message = ''; // сообщаем пользователю, какое из полей заполнено неправильно
-
-
-		this.contactsView?.updateFormState(isValid, message);
-});*/
-
+	
 	// изменение данных модели заказа
   this.events.on('order:changed', (order) => {
 	/*
 	модель заказа не знает, как данные распределены по формам
 	метод validate не знает, из-за чего его вызвали, и
-	проверяет сразу все данные модели и возвразает полный отчет
+	проверяет сразу все данные модели и возвращает полный отчет
 	слушатель order:changed раздает части этого отчета формам
-	в формате FormData
 	*/
 
-		const errors = this.order.validate()
+		const errors = this.order.validate();
 
   	// ключи объектов типа OrderData или UserContacts
-		const orderKeys: (keyof OrderData)[] = ['address', 'payment']
-    const contactsKeys: (keyof UserContact)[] = ['email', 'phone']
-  
-		//отдаем результаты форме заказа	
-		this.orderView.updateFormState(this.getFormData(
-			errors,
-			orderKeys,
-			),
-			this.getPayment()
-		)
-
-		//отдаем результаты форме контактов	
-		this.contactsView.updateFormState(this.getFormData(
-			errors,
-			contactsKeys
-		),)	
+		const orderKeys = ['address', 'payment'] as const;
+    const contactsKeys = ['email', 'phone'] as const;
+  	
+		//данные для формы заказа	
+		const orderFormState = {
+			...this.getFormData(errors, orderKeys),
+			...pickFields(order, orderKeys),
+		};
+	
+		//данные для формы контактов	
+		const contactsFormState = {
+			...this.getFormData(errors, contactsKeys),
+			...pickFields(order, contactsKeys),
+		};
+	
+		// отдаем результаты формам
+		this.orderView.updateFormState(orderFormState)
+		this.contactsView.updateFormState(contactsFormState)	
 	});
 
 	
@@ -317,7 +289,7 @@ private updatePage(): void {
 }
 
 
-private getFormData(errors: OrderErrors, keys: (keyof OrderErrors)[]) : FormData {
+private getFormData(errors: OrderErrors, keys: readonly (keyof OrderErrors)[]) : FormData {
 	const formErrors = Object.values(pickFields(errors, keys));
 	const isValid = !formErrors.length;
 	const message = isValid ? '' : `Введите ${formErrors.join(' и ')}`

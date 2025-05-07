@@ -44,7 +44,7 @@ export abstract class FormView<T extends FormData> extends View<T> implements IF
 	/**
 	 * Управление состоянием формы (кнопка и сообщение)
 	 */
-	public updateFormState(data: FormData): void {
+	public updateFormState(data: Partial<T>): void {
 		this.setDisabled(this.submit, !data.isValid);
 		this.setText(this.errors, data.message ?? '');
 	}

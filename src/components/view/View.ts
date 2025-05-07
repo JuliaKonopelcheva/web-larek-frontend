@@ -96,6 +96,35 @@ export abstract class View<T> implements IView<T> {
     }    
 
     /**
+     * Обновить значение поля ввода, установить фокус и курсор в конец нового фрагмента.
+     */
+    protected updateInputValue(
+      element: HTMLInputElement | null,
+      newValue: string
+    ): void {
+      if (!element) return;
+
+      const oldValue = element.value;
+
+      // Не обновляем, если значение не изменилось
+      if (oldValue === newValue) return;
+
+      const selectionStart = element.selectionStart ?? oldValue.length;
+      const selectionEnd = element.selectionEnd ?? oldValue.length;
+
+      const removedLength = selectionEnd - selectionStart;
+      const insertedLength = newValue.length - (oldValue.length - removedLength);
+      const newCursorPosition = selectionStart + insertedLength;
+
+      // Устанавливаем новое значение через существующий метод
+      this.setInputValue(element, newValue);
+
+      // Ставим фокус и курсор
+      element.focus();
+      element.setSelectionRange(newCursorPosition, newCursorPosition);
+    }
+
+    /**
      * Очистить родительский элемент.
      */
     protected clearChildren(element: HTMLElement): void {
